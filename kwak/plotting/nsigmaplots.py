@@ -1,0 +1,256 @@
+"""
+Plotting Functions
+Functions that generate the nsigma bar plots per level.
+"""
+
+# TODO: change parameter description to colored
+from __future__ import absolute_import
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
+from matplotlib.colors import Normalize, LogNorm
+from matplotlib.colorbar import ColorbarBase
+from matplotlib import cm
+
+from ..w_transform import HaarTransform, InvHaarTransform
+
+from .plottingtools import _BinData,  _findmin, _findmax
+from .plottingtools import  _NewColorMap, _NSigmaFilter
+
+__all__ = ['nsigScalogram', 'nsigFixedRes']
+
+data_color='#0782B0'
+nsigma_color='#54B959'
+
+ymin_delta = 0.2 # small number
+
+def nsigScalogram(data, hypothesis, nsigma, signal_only=None,
+                  nsigma_min=None, nsigma_percent=1,
+                  nsigma_colorcode=False, title=None, xlabel=None, outputfile=None):
+    """
+    Function that plots the nsigma values of the wavelet coefficients per level.
+    Parameters
+    ----------
+    data : array
+    Array to treat as the signal in the signal reconstruction.
+    hypothesis : array
+    Array to treat as the background in the signal reconstruction.
+    nsigma : array
+    Nsigma array of the data.
+    nsigma_min : float
+    Minimum value of the nsigmas to use for the signal reconstruction.
+    nsigma_percent : float
+    Percent of the decreasing-order nsigma array to use in the signal reconstruction.
+    nsigma_colorcode : array
+    Array of shape (nsigma) to use as the color-code for the bins. If None, the
+    right and left side of the bins will be colored slightly different.
+    """
+    
+    nsigCcoeffs = nsigma
+    Level = len(nsigCcoeffs)-1
+    
+    data_hist, _, data_center, data_width = _BinData(data, bins=2**(Level))
+    back_hist, _, back_center, back_width = _BinData(hypothesis, bins=2**(Level))
+    
+    cut = '(No cut)'
+    if nsigma_percent is not None:
+        cut = '(Keep ' + str(nsigma_percent*100) + '%)'
+    if nsigma_min is not None:
+        cut = '(Sigma min = ' + str(nsigma_min)+')'
+    
+    DeltaCoeff = _NSigmaFilter(data, hypothesis, nsigma, nsigma_min, nsigma_percent)
+    
+    ReconstructedData = InvHaarTransform(DeltaCoeff, normalize=False)
+    RecData = ReconstructedData
+    
+    nrows = Level+2
+    ratio = [1.5]
+    ratio += [1]*(Level+1)
+    
+    fig = plt.figure(figsize=(12,12))
+    gs = gridspec.GridSpec(ncols=1, nrows=nrows,
+                           height_ratios=ratio,
+                           hspace=0)
+    axs = [fig.add_subplot(gs[i,0]) for i in range(nrows)]
+    
+    # Fill out top panel
+    axs[0].bar(data_center, data_hist, align='center',
+               width=data_width, color=data_color)
+    axs[0].text(x=.94, y=.63, s='Data', fontsize=12,
+                bbox={'facecolor': 'white', 'alpha': 0.5, 'pad': 5},
+                transform=axs[0].transAxes)
+    axs[0].set_yscale('log')
+    
+    # The second panel will have the reconstructed signal
+    if signal_only is not None:
+        signal_norm = np.linalg.norm(signal_only)
+        signal_only = signal_only/signal_norm
+        signal_hist, _, signal_center, signal_width = _BinData(signal_only, bins=2**(Level))
+        axs[1].plot(signal_center, signal_hist, '*', markersize=3, color='red')
+        axs[1].text(x=.65, y=.23, s=r'$\bullet  $'+'Generating Function', fontsize=12,
+                    bbox={'facecolor': 'white', 'alpha': 0.5, 'pad': 5},
+                    transform=axs[1].transAxes,
+                    fontdict={'color':'red'})
+        RecData = RecData/signal_norm
+    axs[1].plot(data_center, RecData, 'o', markersize=3, color='#E67E22')
+    axs[1].text(x=.65, y=.63, s=r'$\bullet  $'+'Reconstructed Signal {}'.format(cut), fontsize=12,
+                bbox={'facecolor': 'white', 'alpha': 0.5, 'pad': 5},
+                color='#E67E22',
+                transform=axs[1].transAxes)
+    axs[1].plot(range(len(data_center)), np.zeros_like(RecData), color='black', linewidth=0.5)
+    axs[1].set_yscale('linear')
+
+
+    coeffs_min = _findmin(nsigma[:Level]) # Use to set the min ylim of the plots
+    coeffs_max = _findmax(nsigma[:Level]) # Use to set the max ylim of the plots
+    
+    cmap = _NewColorMap()
+    sig_max = _findmax(np.absolute(nsigma[:Level]))
+    norm = Normalize(vmin=0, vmax=sig_max)
+
+    for l in range(Level):
+        bins = 2**(Level-l-1)
+        hist, edges, center, width = _BinData(nsigma[l], bins=bins)
+        midLeft = (center-edges[:-1])/2.0
+        LeftCenter = edges[:-1]+midLeft
+        midRight = (edges[1:]-center)/2.0
+        RightCenter = center+midRight
+        
+        if nsigma_colorcode==True:
+            norm_points = norm(np.absolute(nsigma[l]))
+            color_points = [cmap(i) for i in norm_points]
+            axs[l+2].bar(LeftCenter, hist, align='center', width=width/2.0,
+                         color=color_points)
+            axs[l+2].bar(RightCenter, hist, align='center', width=width/2.0,
+                         color=color_points, alpha=0.8)
+        
+        else:
+            axs[l+2].bar(LeftCenter, hist, align='center', width=width/2.0,
+                       color='#58C85E')
+            axs[l+2].bar(RightCenter, hist, align='center', width=width/2.0,
+                       color='#43A961')
+
+        axs[l+2].set_ylim(coeffs_min-ymin_delta, coeffs_max+ymin_delta)
+        axs[l+2].plot(range(bins), np.zeros(bins), color='black', linewidth=0.5)
+        axs[l+2].tick_params(axis='x', bottom=False, labelbottom=False)
+        lev = Level-l-1
+        axs[l+2].text(x=.9, y=.63, s=r'$N\sigma(C_{l=%.1i})$'%(lev), fontsize=12,
+                      bbox={'facecolor': 'white', 'alpha': 0.5, 'pad': 5},
+                      transform=axs[l+2].transAxes)
+
+    if nsigma_colorcode==True:
+        cbar_axs = fig.add_axes([0.93, 0.15, 0.02, 0.7]) # colorbar axis
+        cbar = ColorbarBase(cbar_axs, cmap=cmap, norm=norm)
+    fig.suptitle("Nsigma per Level", fontsize=20, y=0.92)
+    fig.text(x=0.5, y=0.1, s=xlabel, fontsize=12)
+    if outputfile is not None:
+        plt.savefig(outputfile)
+    plt.show()
+
+
+
+
+def nsigFixedRes(data, hypothesis, nsigma, nsigma_fixedres,
+                 nsigma_colorcode=False, title=None, xlabel=None, outputfile=None):
+    """
+    Function that plots the nsigma values of the wavelet coefficients per level.
+    The global significance per level is also displayed.
+    Parameters
+    ----------
+    data : array
+    Array to treat as the signal in the signal reconstruction.
+    hypothesis : array
+    Array to treat as the background in the signal reconstruction.
+    nsigma : array
+    Nsigma array of the data.
+    nsigma_min : float
+    Minimum value of the nsigmas to use for the signal reconstruction.
+    nsigma_percent : float
+    Percent of the decreasing-order nsigma array to use in the signal reconstruction.
+    colorcode : array
+    Array of shape (nsigma) to use as the color-code for the bins. If None, the
+    right and left side of the bins will be colored slightly different.
+    """
+    
+    nsigCcoeffs = nsigma
+    Level = len(nsigCcoeffs)-1
+    
+    data_hist, _, data_center, data_width = _BinData(data, bins=2**(Level))
+    back_hist, _, back_center, back_width = _BinData(hypothesis, bins=2**(Level))
+    
+    nrows = Level+1
+    ratio = [1.5]
+    ratio += [1]*(Level)
+    
+    fig = plt.figure(figsize=(12,12))
+    gs = gridspec.GridSpec(ncols=2, nrows=nrows,
+                           height_ratios=ratio,
+                           width_ratios=[6,1],
+                           hspace=0, wspace=0)
+    axs = [fig.add_subplot(gs[i,0]) for i in range(nrows)]
+    axs2 = [fig.add_subplot(gs[i,1]) for i in range(nrows)]
+                           
+    # Fill out top panel
+    axs[0].bar(data_center, data_hist, align='center',
+               width=data_width, color=data_color)
+    axs[0].text(x=.94, y=.63, s='Data', fontsize=12,
+                bbox={'facecolor': 'white', 'alpha': 0.5, 'pad': 5},
+                transform=axs[0].transAxes)
+    axs[0].set_yscale('log')
+    axs2[0].tick_params(axis='both', bottom=False, left=False,
+                        labelbottom=False, labelleft=False)
+                        
+    coeffs_min = _findmin(nsigma[:Level]) # Use to set the min ylim of the plots
+    coeffs_max = _findmax(nsigma[:Level]) # Use to set the max ylim of the plots
+    
+    cmap = _NewColorMap()
+    sig_max = _findmax(np.absolute(nsigma[:Level]))
+    norm = Normalize(vmin=0, vmax=sig_max)
+    
+    sig_min = _findmin(nsigma_fixedres[:Level])
+    sig_max = _findmax(nsigma_fixedres[:Level])
+                           
+    for l in range(Level):
+        bins = 2**(Level-l-1)
+        hist, edges, center, width = _BinData(nsigma[l], bins=bins)
+        midLeft = (center-edges[:-1])/2.0
+        LeftCenter = edges[:-1]+midLeft
+        midRight = (edges[1:]-center)/2.0
+        RightCenter = center+midRight
+                                   
+        if nsigma_colorcode==True:
+            norm_points = norm(np.absolute(nsigma[l]))
+            color_points = [cmap(i) for i in norm_points]
+            axs[l+1].bar(LeftCenter, hist, align='center', width=width/2.0,
+                         color=color_points)
+            axs[l+1].bar(RightCenter, hist, align='center', width=width/2.0,
+                         color=color_points, alpha=0.8)
+                                                        
+        else:
+            axs[l+1].bar(LeftCenter, hist, align='center', width=width/2.0, color='#58C85E')
+            axs[l+1].bar(RightCenter, hist, align='center', width=width/2.0, color='#43A961')
+                                                                             
+        axs[l+1].set_ylim(coeffs_min-ymin_delta, coeffs_max+ymin_delta)
+        axs[l+1].plot(range(bins), np.zeros(bins), color='black', linewidth=0.5)
+        axs[l+1].tick_params(axis='x', bottom=False, labelbottom=False)
+        lev = Level-l-1
+        axs[l+1].text(x=.9, y=.63, s=r'$N\sigma(C_{l=%.1i})$'%(lev), fontsize=12,
+        bbox={'facecolor': 'white', 'alpha': 0.5, 'pad': 5}, transform=axs[l+1].transAxes)
+
+        # -- Fill the right panels with the global significance per level --
+        axs2[l+1].bar(0, nsigma_fixedres[l], color='#0A700F')
+        axs2[l+1].tick_params(axis='x', bottom=False, labelbottom=False, labelleft=False)
+        axs2[l+1].ticklabel_format(axis='y', style='sci')
+        axs2[l+1].yaxis.tick_right()
+        axs2[l+1].set_ylim(bottom=0.0, top=sig_max+ymin_delta)
+
+    if nsigma_colorcode==True:
+        cbar_axs = fig.add_axes([0.94, 0.15, 0.02, 0.7]) # colorbar axis
+        cbar = ColorbarBase(cbar_axs, cmap=cmap, norm=norm)
+    fig.suptitle(title, fontsize=20, y=0.92)
+    fig.text(x=0.5, y=0.1, s=xlabel, fontsize=12)
+    if outputfile is not None:
+        plt.savefig(outputfile)
+        plt.show()
+
+
