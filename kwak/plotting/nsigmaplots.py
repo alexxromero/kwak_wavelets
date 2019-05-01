@@ -75,30 +75,34 @@ def nsigScalogram(data, hypothesis, nsigma, signal_only=None,
     
     # Fill out top panel
     axs[0].bar(data_center, data_hist, align='center',
-               width=data_width, color=data_color)
-    axs[0].text(x=.94, y=.63, s='Data', fontsize=12,
-                bbox={'facecolor': 'white', 'alpha': 0.5, 'pad': 5},
-                transform=axs[0].transAxes)
+               width=data_width, color=data_color, label="Data")
+    #axs[0].text(x=.94, y=.63, s='Data', fontsize=12,
+    #            bbox={'facecolor': 'white', 'alpha': 0.5, 'pad': 5},
+    #            transform=axs[0].transAxes)
+    axs[0].legend(edgecolor="black", fancybox=False, fontsize=12,
+                  handlelength=0, handletextpad=0)
     axs[0].set_yscale('log')
     
     # The second panel will have the reconstructed signal
     if signal_only is not None:
-        signal_norm = np.linalg.norm(signal_only)
-        signal_only = signal_only/signal_norm
+        #norm = np.linalg.norm(hypothesis)
+        signal_only = np.divide(signal_only, np.sqrt(hypothesis))
         signal_hist, _, signal_center, signal_width = _BinData(signal_only, bins=2**(Level))
-        axs[1].plot(signal_center, signal_hist, '*', markersize=3, color='red')
-        axs[1].text(x=.65, y=.23, s=r'$\bullet  $'+'Generating Function', fontsize=12,
-                    bbox={'facecolor': 'white', 'alpha': 0.5, 'pad': 5},
-                    transform=axs[1].transAxes,
-                    fontdict={'color':'red'})
-        RecData = RecData/signal_norm
-    axs[1].plot(data_center, RecData, 'o', markersize=3, color='#E67E22')
-    axs[1].text(x=.65, y=.63, s=r'$\bullet  $'+'Reconstructed Signal {}'.format(cut), fontsize=12,
-                bbox={'facecolor': 'white', 'alpha': 0.5, 'pad': 5},
-                color='#E67E22',
-                transform=axs[1].transAxes)
+        #axs[1].plot(signal_center, signal_hist, '*', markersize=3, color='red')
+        axs[1].plot(signal_center, signal_hist, color='red', label="Generating Function")
+        #axs[1].text(x=.65, y=.23, s=r'- Generating Function', fontsize=12,
+        #            bbox={'facecolor': 'white', 'alpha': 0.5, 'pad': 5},
+        #            transform=axs[1].transAxes,
+        #            fontdict={'color':'red'})
+        RecData = np.divide(RecData, np.sqrt(hypothesis))
+    axs[1].plot(data_center, RecData, 'o', markersize=3, color='#E67E22', label='Reconstructed Signal {}'.format(cut))
+    #axs[1].text(x=.65, y=.63, s=r'$\bullet  $'+'Reconstructed Signal {}'.format(cut), fontsize=12,
+    #            bbox={'facecolor': 'white', 'alpha': 0.5, 'pad': 5},
+    #            color='#E67E22',
+    #            transform=axs[1].transAxes)
     axs[1].plot(range(len(data_center)), np.zeros_like(RecData), color='black', linewidth=0.5)
     axs[1].set_yscale('linear')
+    axs[1].legend(edgecolor="black", fancybox=False, fontsize=12)
 
 
     coeffs_min = _findmin(nsigma[:Level]) # Use to set the min ylim of the plots
@@ -134,9 +138,10 @@ def nsigScalogram(data, hypothesis, nsigma, signal_only=None,
         axs[l+2].plot(range(bins), np.zeros(bins), color='black', linewidth=0.5)
         axs[l+2].tick_params(axis='x', bottom=False, labelbottom=False)
         lev = Level-l-1
-        axs[l+2].text(x=.9, y=.63, s=r'$N\sigma(C_{l=%.1i})$'%(lev), fontsize=12,
-                      bbox={'facecolor': 'white', 'alpha': 0.5, 'pad': 5},
-                      transform=axs[l+2].transAxes)
+        axs[l+2].text(x=-.065, y=.66, s=r'$N\sigma(C_{l=%.1i})$'%(lev), fontsize=12,
+                      #bbox={'facecolor': 'white', 'alpha': 0.5, 'pad': 5},
+                      transform=axs[l+2].transAxes,
+                      rotation=90)
 
     if nsigma_colorcode==True:
         cbar_axs = fig.add_axes([0.93, 0.15, 0.02, 0.7]) # colorbar axis
@@ -192,11 +197,13 @@ def nsigFixedRes(data, hypothesis, nsigma, nsigma_fixedres,
                            
     # Fill out top panel
     axs[0].bar(data_center, data_hist, align='center',
-               width=data_width, color=data_color)
-    axs[0].text(x=.94, y=.63, s='Data', fontsize=12,
-                bbox={'facecolor': 'white', 'alpha': 0.5, 'pad': 5},
-                transform=axs[0].transAxes)
+               width=data_width, color=data_color, label="Data")
+    #axs[0].text(x=.94, y=.63, s='Data', fontsize=12,
+    #            bbox={'facecolor': 'white', 'alpha': 0.5, 'pad': 5},
+    #            transform=axs[0].transAxes)
     axs[0].set_yscale('log')
+    axs[0].legend(edgecolor="black", fancybox=False, fontsize=12,
+                  handlelength=0, handletextpad=0)
     axs2[0].tick_params(axis='both', bottom=False, left=False,
                         labelbottom=False, labelleft=False)
                         
@@ -234,8 +241,9 @@ def nsigFixedRes(data, hypothesis, nsigma, nsigma_fixedres,
         axs[l+1].plot(range(bins), np.zeros(bins), color='black', linewidth=0.5)
         axs[l+1].tick_params(axis='x', bottom=False, labelbottom=False)
         lev = Level-l-1
-        axs[l+1].text(x=.9, y=.63, s=r'$N\sigma(C_{l=%.1i})$'%(lev), fontsize=12,
-        bbox={'facecolor': 'white', 'alpha': 0.5, 'pad': 5}, transform=axs[l+1].transAxes)
+        axs[l+1].text(x=-.067, y=.66, s=r'$N\sigma(C_{l=%.1i})$'%(lev), fontsize=12,
+                      #bbox={'facecolor': 'white', 'alpha': 0.5, 'pad': 5},
+                      transform=axs[l+1].transAxes, rotation=90)
 
         # -- Fill the right panels with the global significance per level --
         axs2[l+1].bar(0, nsigma_fixedres[l], color='#0A700F')
