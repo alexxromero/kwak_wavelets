@@ -24,14 +24,15 @@ class NsetsMethod:
         NsetsMethod class contains all functions and instances used in the 'nsets'
         method.
     """
-    def __init__(self, data, hypothesis, nsets, extrapolate=False, seed=123):
+    def __init__(self, data, hypothesis, nsets, extrapolate=False, fastGaussian=False, seed=123):
         """
         Parameters
         ----------
         data : array_like
         hypothesis : array_like
         nsets : int
-        extrapolate : boolean
+        extrapolate : bool
+        fastGaussian : bool
         seed : int
         """
         self.WaveDec_data = HaarTransform(data, Normalize=False)
@@ -44,6 +45,7 @@ class NsetsMethod:
         self.Level = len_wdata-1
         self.Seed = seed
         self.Nsets = nsets
+        self.fast = fastGaussian
 
         WaveDec_nsets = np.empty((nsets), dtype=object) # Wavelet dec of the nset pseudodata
         WaveDec_nsets[0] = self.WaveDec_data
@@ -65,16 +67,27 @@ class NsetsMethod:
         
         self.Histogram = PseudoWD_PerBin
         self.zipHistogram = self.zipHistogram(self.Histogram)
-
-        self.PlessX, self.PeqX = self.ProbX() #Prob less extreme, Prob equally extreme
-        self.Nsigma = self.NSigmaPerBin(self.PlessX) #Nsigma
-        self.Log10PX = self.Log10ProbPerBin(self.PlessX, self.PeqX) #Log10 of Prob greater or equally extreme
-        self.NsigmaFixedRes = FixedResGlobal(self.Nsigma)
-        if extrapolate==True:
-            self.PlessX_fit, self.PeqX_fit = self.Extrapolate()
-            self.Nsigma_fit = self.NSigmaPerBin(self.PlessX_fit)
-            self.Log10PX_fit = self.Log10ProbPerBin(self.PlessX_fit, self.PeqX_fit)
-            self.NsigmaFixedRes_fit = FixedResGlobal(self.Nsigma_fit)
+        
+        if self.fast==True:
+            nsigmafit = _zeros_like(self.WaveDec_data)
+            for l, level in enumerate(self.Histogram):
+                for j, hist_entry in enumerate(level):
+                    coeff_list, multi_list = hist_entry
+                    mu0, sigma0 = _hist_dist(coeff_list, multi_list)
+                    coeff_lj = self.WaveDec_data[l][j]
+                    nsigmafit[l][j] = (coeff_lj - mu0)/sigma0
+            self.Nsigma = nsigmafit
+            self.NsigmaFixedRes = FixedResGlobal(self.Nsigma)
+        else:
+            self.PlessX, self.PeqX = self.ProbX() #Prob less extreme, Prob equally extreme
+            self.Nsigma = self.NSigmaPerBin(self.PlessX) #Nsigma
+            self.Log10PX = self.Log10ProbPerBin(self.PlessX, self.PeqX) #Log10 of Prob greater or equally extreme
+            self.NsigmaFixedRes = FixedResGlobal(self.Nsigma)
+            if extrapolate==True:
+                self.PlessX_fit, self.PeqX_fit = self.Extrapolate()
+                self.Nsigma_fit = self.NSigmaPerBin(self.PlessX_fit)
+                self.Log10PX_fit = self.Log10ProbPerBin(self.PlessX_fit, self.PeqX_fit)
+                self.NsigmaFixedRes_fit = FixedResGlobal(self.Nsigma_fit)
 
     @staticmethod
     def GeneratePoisson(data, seed):
@@ -202,7 +215,7 @@ def _hist_dist(coeff_list, multi_list):
 
     var = 0.0
     for i in range(len(coeff_list)):
-        var += coeff_list[i]*pow(multi_list[i]-mean, 2)
+        var += multi_list[i]*pow(coeff_list[i]-mean, 2)
     std = np.sqrt(var/n)
     return mean, std
 
