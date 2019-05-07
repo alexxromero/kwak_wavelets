@@ -2,6 +2,11 @@
 
 KWAK is a Python package that generates a statistical analysis based on discrete Haar wavelets. 
 
+### Install   
+Run to install 
+
+    pip install kwak   
+
 ### References
 [1] G. F. Giudice, Y. Kats, M. McCullough, R. Torre and A. Urbano, JHEP 1806, 009 (2018) doi:10.1007/JHEP06(2018)009 [arXiv:1711.08437 [hep-ph]].   
 [2] V. Rentala, W. Shepherd and T. M. P. Tait, JHEP 1408, 042 (2014) doi:10.1007/JHEP08(2014)042 [arXiv:1404.1929 [hep-ph]].   
