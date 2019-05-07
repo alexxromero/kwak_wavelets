@@ -40,6 +40,9 @@ class nsets:
           File to save all instances to.
         """
         
+        data = np.asarray(data)
+        hypothesis = np.asarray(hypothesis)
+        
         data_type = type(data[0].item()) # Input data must be integer type
         assert(issubclass(data_type, int)), "Data array must be integer valued."
         assert(len(data)==len(hypothesis)), "Data and hypothesis arrays must have the same length."
@@ -137,6 +140,10 @@ class exact:
         ::outputdir:: string
           File to save all instances to.
         """
+        
+        data = np.asarray(data)
+        hypothesis = np.asarray(hypothesis)
+        
         data_type = type(data[0]) # Input data must be integer type
         assert(issubclass(data_type, int)), "Data array must be integer valued."
 
