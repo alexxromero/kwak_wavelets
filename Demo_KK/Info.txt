@@ -1,4 +1,0 @@
-Method : nsets
-Wavelet Decomposition Level : 6 
-Np.sets : 300000
-Extrapolate : True
