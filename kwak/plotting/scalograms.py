@@ -127,8 +127,8 @@ def wScalogram(data, firsttrend=False, logscale=True,
                           transform=axs[l+1].transAxes)
             axs[l+1].set_yscale(scale)
 
-    fig.suptitle(title, fontsize=20, y=0.92)
-    fig.text(x=0.5, y=0.1, s=xlabel, fontsize=12)
+    fig.suptitle(title, fontsize=18, y=0.92)
+    fig.text(x=0.5, y=0.1, s=xlabel, fontsize=14)
     if outputfile is not None:
         plt.savefig(outputfile)
     plt.show()
@@ -250,8 +250,8 @@ def wScalogram_nsig(data, nsigma, firsttrend=False, logscale=True,
             axs[l+1].set_yscale(scale)
 
     cbar = ColorbarBase(cbar_axs, cmap=cmap, norm=norm)
-    fig.suptitle(title, fontsize=20, y=0.92)
-    fig.text(x=0.5, y=0.1, s=xlabel, fontsize=12)
+    fig.suptitle(title, fontsize=18, y=0.92)
+    fig.text(x=0.5, y=0.1, s=xlabel, fontsize=14)
     if outputfile is not None:
         plt.savefig(outputfile)
     plt.show()
