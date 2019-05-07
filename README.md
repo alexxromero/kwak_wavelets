@@ -1,4 +1,4 @@
-# Kinematic Wavelet Analysis Kit (kwak)
+# Kinematic Wavelet Analysis Kit (KWAK)
 
 KWAK is a Python package that generates a statistical analysis based on discrete Haar wavelets. 
 
