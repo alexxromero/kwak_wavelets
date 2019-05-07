@@ -64,6 +64,7 @@ class NsetsMethod:
         PseudoWD_PerBin[-1][0] = [unique, counts]
         
         self.Histogram = PseudoWD_PerBin
+        self.zipHistogram = self.zipHistogram(self.Histogram)
 
         self.PlessX, self.PeqX = self.ProbX() #Prob less extreme, Prob equally extreme
         self.Nsigma = self.NSigmaPerBin(self.PlessX) #Nsigma
@@ -174,6 +175,14 @@ class NsetsMethod:
                     eqX_fit[l][j] = sumeq
         return lessX_fit, eqX_fit
 
+    def zipHistogram(self, histogram):
+        zipHist = _empty_like(self.WaveDec_data)
+        for i, level in enumerate(histogram):
+            for j, entry in enumerate(level):
+                ls_zip = zip(entry[0], entry[1])
+                zipHist[i][j] = list(ls_zip)
+        return zipHist
+
 def _nsigma(pLessX):
     return mp.sqrt(2)*mp.erfinv(pLessX)
 
@@ -252,3 +261,5 @@ def _np_fitC(c, n0, mu, sigma, v, p):
     expA = -abs(v) * pow(abs(c), p)
     np_fitlogC = n0 + expS + expA
     return np.exp(np_fitlogC)
+
+

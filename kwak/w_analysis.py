@@ -46,7 +46,8 @@ class nsets:
 
         NsetsAnalysis = NsetsMethod(data, hypothesis, nsets, extrapolate, seed=seed)
         self.Level = NsetsAnalysis.Level
-        self.Histogram = NsetsAnalysis.Histogram
+        self.Histogram = NsetsAnalysis.zipHistogram 
+        
         self.Nsigma = NsetsAnalysis.Nsigma
         self.PlessX = NsetsAnalysis.PlessX
         self.PeqX = NsetsAnalysis.PeqX
@@ -117,7 +118,7 @@ class exact:
 
         ExactAnalysis = ExactMethod(data, hypothesis)
         self.Level = ExactAnalysis.Level
-        self.Histogram = ExactAnalysis.Histogram
+        self.Histogram = ExactAnalysis.zipHistogram
         self.Nsigma = ExactAnalysis.Nsigma
         self.PlessX = ExactAnalysis.PlessX
         self.PeqX = ExactAnalysis.PeqX

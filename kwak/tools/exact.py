@@ -106,6 +106,8 @@ class ExactMethod:
         self.Nsigma = self.NSigmaPerBin(self.PlessX)
         self.NsigmaFixedRes = FixedResGlobal(self.Nsigma)
 
+        self.zipHistogram = self.zipHistogram(self.Histogram)
+
     def NSigmaPerBin(self, lessX):
         nsigma = _zeros_like(self.WaveDec_data)
         for l, level in enumerate(self.WaveDec_data):
@@ -115,6 +117,14 @@ class ExactMethod:
                 nsig = float(mp.nstr(sign*_nsigma(lessX[l][j]), g_logdigits))
                 nsigma[l][j] = nsig
         return nsigma
+    
+    def zipHistogram(self, histogram):
+        zipHist = _empty_like(self.WaveDec_data)
+        for i, level in enumerate(histogram):
+            for j, entry in enumerate(level):
+                ls_zip = zip(entry[0], entry[1])
+                zipHist[i][j] = list(ls_zip)
+        return zipHist
 
 
     @staticmethod
@@ -141,4 +151,5 @@ class ExactMethod:
 
 def _nsigma(pLessX):
     return mp.sqrt(2)*mp.erfinv(pLessX)
+
 
