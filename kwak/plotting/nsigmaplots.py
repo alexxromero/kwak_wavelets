@@ -76,9 +76,7 @@ def nsigScalogram(data, hypothesis, nsigma, signal_only=None,
     # Fill out top panel
     axs[0].bar(data_center, data_hist, align='center',
                width=data_width, color=data_color, label="Data")
-    #axs[0].text(x=.94, y=.63, s='Data', fontsize=12,
-    #            bbox={'facecolor': 'white', 'alpha': 0.5, 'pad': 5},
-    #            transform=axs[0].transAxes)
+
     axs[0].legend(edgecolor="black", fancybox=False, fontsize=12,
                   handlelength=0, handletextpad=0)
     axs[0].set_yscale('log')
@@ -90,16 +88,10 @@ def nsigScalogram(data, hypothesis, nsigma, signal_only=None,
         signal_hist, _, signal_center, signal_width = _BinData(signal_only, bins=2**(Level))
         #axs[1].plot(signal_center, signal_hist, '*', markersize=3, color='red')
         axs[1].plot(signal_center, signal_hist, color='red', label="Generating Function")
-        #axs[1].text(x=.65, y=.23, s=r'- Generating Function', fontsize=12,
-        #            bbox={'facecolor': 'white', 'alpha': 0.5, 'pad': 5},
-        #            transform=axs[1].transAxes,
-        #            fontdict={'color':'red'})
-        RecData = np.divide(RecData, np.sqrt(hypothesis))
+
+    RecData = np.divide(RecData, np.sqrt(hypothesis))
     axs[1].plot(data_center, RecData, 'o', markersize=3, color='#E67E22', label='Reconstructed Signal {}'.format(cut))
-    #axs[1].text(x=.65, y=.63, s=r'$\bullet  $'+'Reconstructed Signal {}'.format(cut), fontsize=12,
-    #            bbox={'facecolor': 'white', 'alpha': 0.5, 'pad': 5},
-    #            color='#E67E22',
-    #            transform=axs[1].transAxes)
+
     axs[1].plot(range(len(data_center)), np.zeros_like(RecData), color='black', linewidth=0.5)
     axs[1].set_yscale('linear')
     axs[1].legend(edgecolor="black", fancybox=False, fontsize=12)

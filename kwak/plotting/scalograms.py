@@ -22,7 +22,7 @@ Coeffs_color='#69B4F2'
 Firsttrend_color=Coeffs_color
 Nsigma_color='#54B959'
 
-def wScalogram(data, firsttrend=False, logscale=True,
+def wScalogram(data, hypothesis=None, signal_only=None, firsttrend=False, logscale=True,
                filled=False, title=None, xlabel=None, outputfile=None):
     """
     Function that generates a bar plot of the wavelet coefficients of the data array
@@ -44,9 +44,12 @@ def wScalogram(data, firsttrend=False, logscale=True,
     FirstTrend = WaveDec_data[-1]
     Level = len(Ccoeffs)
     
-    nrows = Level if firsttrend==False else Level+1
+    nlevels = Level if firsttrend==False else Level+1
+    nrows = nlevels+1 # the first panel is the data histogram
+    if signal_only is not None:
+        nrows += 1 # add another panel for the generating function
     ratio = [1.5]
-    ratio += [1]*nrows
+    ratio += [1]*(nrows-1)
     
     if filled==True:
         histtype='bar'
@@ -63,10 +66,10 @@ def wScalogram(data, firsttrend=False, logscale=True,
         scale='linear'
 
     fig = plt.figure(figsize=(12,12))
-    gs = gridspec.GridSpec(ncols=1, nrows=nrows+1,
+    gs = gridspec.GridSpec(ncols=1, nrows=nrows,
                            height_ratios=ratio,
                            hspace=0)
-    axs = [fig.add_subplot(gs[i,0]) for i in range(nrows+1)]
+    axs = [fig.add_subplot(gs[i,0]) for i in range(nrows)]
 
     # Fill out top panel
     data_hist, _, data_center, data_width = _BinData(data, bins=2**Level)
@@ -76,6 +79,16 @@ def wScalogram(data, firsttrend=False, logscale=True,
                 bbox={'facecolor': 'white', 'alpha': 0.5, 'pad': 5},
                 transform=axs[0].transAxes)
     axs[0].set_yscale(scale)
+
+    # If generating function is provided
+    if signal_only is not None:
+        if hypothesis is not None:
+            signal_only = np.divide(signal_only, np.sqrt(hypothesis))
+        signal_hist, _, signal_center, signal_width = _BinData(signal_only, bins=2**(Level))
+        axs[1].plot(signal_center, signal_hist, color='red', label="Generating Function")
+        axs[1].tick_params(axis='both', bottom=False, labelbottom=False)
+        axs[1].set_yscale('linear')
+        axs[1].legend(edgecolor="black", loc=2, fancybox=False, fontsize=12)
     
     # If firsttrend, fill out the bottom panel with the first trend
     if firsttrend==True:
@@ -89,6 +102,8 @@ def wScalogram(data, firsttrend=False, logscale=True,
                      transform=axs[-1].transAxes)
 
     # Fill out the rest of the pannels with the wavelet coefficients
+    # If signal_only, start two panels below the top panel
+    s = 2 if signal_only is not None else 1
     for l in range(Level):
         bins=2**(Level-l-1)
         coeffs = Ccoeffs[l]
@@ -99,7 +114,7 @@ def wScalogram(data, firsttrend=False, logscale=True,
             pos_coeffs = np.zeros_like(coeffs)
             for i in pos_ix:
                 pos_coeffs[i] = coeffs[i]
-            axs[l+1].hist(x=range(bins), bins=bins,
+            axs[l+s].hist(x=range(bins), bins=bins,
                           weights=pos_coeffs, histtype=histtype, color=coeffs_color)
 
             # Now plot the negative coefficients. The bars are hashed to distinguish the
@@ -108,24 +123,24 @@ def wScalogram(data, firsttrend=False, logscale=True,
             neg_coeffs = np.zeros_like(coeffs)
             for j in neg_ix:
                 neg_coeffs[j] = np.absolute(coeffs[j])
-            axs[l+1].hist(x=range(bins), bins=bins,
+            axs[l+s].hist(x=range(bins), bins=bins,
                           weights=neg_coeffs, histtype=histtype, hatch='///', color=coeffs_color)
 
-            axs[l+1].tick_params(axis='both', bottom=False, labelbottom=False)
+            axs[l+s].tick_params(axis='both', bottom=False, labelbottom=False)
             lev = Level-l-1
-            axs[l+1].text(x=.93, y=.63, s=r'$C_{l=%.1i}$'%(lev), fontsize=12,
+            axs[l+s].text(x=.93, y=.63, s=r'$C_{l=%.1i}$'%(lev), fontsize=12,
                           bbox={'facecolor': 'white', 'alpha': 0.5, 'pad': 5},
                           transform=axs[l+1].transAxes)
-            axs[l+1].set_yscale(scale)
+            axs[l+s].set_yscale(scale)
 
         else:
-            axs[l+1].hist(x=range(bins), bins=bins, weights=coeffs, histtype=histtype, color=coeffs_color)
-            axs[l+1].tick_params(axis='both', bottom=False, labelbottom=False)
+            axs[l+s].hist(x=range(bins), bins=bins, weights=coeffs, histtype=histtype, color=coeffs_color)
+            axs[l+s].tick_params(axis='both', bottom=False, labelbottom=False)
             lev = Level-l-1
-            axs[l+1].text(x=.93, y=.63, s=r'$C_{l=%.1i}$'%(lev), fontsize=12,
+            axs[l+s].text(x=.93, y=.63, s=r'$C_{l=%.1i}$'%(lev), fontsize=12,
                           bbox={'facecolor': 'white', 'alpha': 0.5, 'pad': 5},
                           transform=axs[l+1].transAxes)
-            axs[l+1].set_yscale(scale)
+            axs[l+s].set_yscale(scale)
 
     fig.suptitle(title, fontsize=18, y=0.92)
     fig.text(x=0.5, y=0.1, s=xlabel, fontsize=14)
@@ -134,7 +149,8 @@ def wScalogram(data, firsttrend=False, logscale=True,
     plt.show()
 
 
-def wScalogram_nsig(data, nsigma, firsttrend=False, logscale=True,
+def wScalogram_nsig(data, hypothesis=None, signal_only=None, nsigma=None,
+                    firsttrend=False, logscale=True,
                     title=None, xlabel=None, outputfile=None):
     """
     Function that generates a bar plot of the wavelet coefficients of the data array
@@ -162,16 +178,19 @@ def wScalogram_nsig(data, nsigma, firsttrend=False, logscale=True,
         scale='log'
     else:
         scale='linear'
-    
-    nrows = Level if firsttrend==False else Level+1
+
+    nlevels = Level if firsttrend==False else Level+1
+    nrows = nlevels+1 # the first panel is the data histogram
+    if signal_only is not None:
+        nrows += 1 # add another panel for the generating function
     ratio = [1.5]
-    ratio += [1]*nrows
-    
+    ratio += [1]*(nrows-1)
+
     fig = plt.figure(figsize=(12,12))
-    gs = gridspec.GridSpec(ncols=1, nrows=nrows+1,
+    gs = gridspec.GridSpec(ncols=1, nrows=nrows,
                            height_ratios=ratio,
                            hspace=0)
-    axs = [fig.add_subplot(gs[i,0]) for i in range(nrows+1)]
+    axs = [fig.add_subplot(gs[i,0]) for i in range(nrows)]
     cbar_axs = fig.add_axes([0.93, 0.15, 0.02, 0.7]) # colorbar axis
                            
     # Fill out top panel
@@ -182,6 +201,15 @@ def wScalogram_nsig(data, nsigma, firsttrend=False, logscale=True,
                 bbox={'facecolor': 'white', 'alpha': 0.5, 'pad': 5},
                 transform=axs[0].transAxes)
                 
+    # If generating function is provided
+    if signal_only is not None:
+        if hypothesis is not None:
+            signal_only = np.divide(signal_only, np.sqrt(hypothesis))
+        signal_hist, _, signal_center, signal_width = _BinData(signal_only, bins=2**(Level))
+        axs[1].plot(signal_center, signal_hist, color='red', label="Generating Function")
+        axs[1].tick_params(axis='both', bottom=False, labelbottom=False)
+        axs[1].set_yscale('linear')
+        axs[1].legend(edgecolor="black", loc=2, fancybox=False, fontsize=12)
 
     cmap = _NewColorMap()
     binintensity = np.absolute(nsigma)
@@ -204,6 +232,7 @@ def wScalogram_nsig(data, nsigma, firsttrend=False, logscale=True,
 
     # Now plot the negative coefficients. The bars are hashed to distinguish the
     # pos and neg coefficients.
+    s = 2 if signal_only is not None else 1
     for l in range(Level):
         bins=2**(Level-l-1)
         coeffs = Ccoeffs[l]
@@ -217,7 +246,7 @@ def wScalogram_nsig(data, nsigma, firsttrend=False, logscale=True,
             for i in pos_ix:
                 pos_coeffs[i] = coeffs[i]
             pos_hist, _, pos_center, pos_width = _BinData(pos_coeffs, bins=bins)
-            axs[l+1].bar(pos_center, pos_hist, align='center', width=pos_width, color=color_points)
+            axs[l+s].bar(pos_center, pos_hist, align='center', width=pos_width, color=color_points)
              
             # Now plot the negative coefficients. The bars are hashed to distinguish the
             # pos and neg coefficients.
@@ -226,28 +255,28 @@ def wScalogram_nsig(data, nsigma, firsttrend=False, logscale=True,
             for j in neg_ix:
                 neg_coeffs[j] = np.absolute(coeffs[j])
             neg_hist, _, neg_center, neg_width = _BinData(neg_coeffs, bins=bins)
-            axs[l+1].bar(neg_center, neg_hist, align='center', width=neg_width, color=color_points,
+            axs[l+s].bar(neg_center, neg_hist, align='center', width=neg_width, color=color_points,
                          hatch='///')
                                    
-            axs[l+1].tick_params(axis='both', bottom=False, labelbottom=False)
+            axs[l+s].tick_params(axis='both', bottom=False, labelbottom=False)
             lev = Level-l-1
-            axs[l+1].text(x=.93, y=.63, s=r'$C_{l=%.1i}$'%(lev), fontsize=12,
+            axs[l+s].text(x=.93, y=.63, s=r'$C_{l=%.1i}$'%(lev), fontsize=12,
                           bbox={'facecolor': 'white', 'alpha': 0.5, 'pad': 5},
                           transform=axs[l+1].transAxes)
-            axs[l+1].set_yscale(scale)
+            axs[l+s].set_yscale(scale)
         
         else:
             hist, _, center, width = _BinData(coeffs, bins=bins)
-            axs[l+1].bar(center, hist, align='center', width=width,
+            axs[l+s].bar(center, hist, align='center', width=width,
                          color=color_points)
-            axs[l+1].plot(range(bins), np.zeros(bins), color='black',
+            axs[l+s].plot(range(bins), np.zeros(bins), color='black',
                           linewidth=0.5)
-            axs[l+1].tick_params(axis='both', bottom=False, labelbottom=False)
+            axs[l+s].tick_params(axis='both', bottom=False, labelbottom=False)
             lev=Level-l-1
-            axs[l+1].text(x=.93, y=.63, s=r'$C_{l=%.1i}$'%(lev), fontsize=12,
+            axs[l+s].text(x=.93, y=.63, s=r'$C_{l=%.1i}$'%(lev), fontsize=12,
                           bbox={'facecolor': 'white', 'alpha': 0.5, 'pad': 5},
                           transform=axs[l+1].transAxes)
-            axs[l+1].set_yscale(scale)
+            axs[l+s].set_yscale(scale)
 
     cbar = ColorbarBase(cbar_axs, cmap=cmap, norm=norm)
     fig.suptitle(title, fontsize=18, y=0.92)
