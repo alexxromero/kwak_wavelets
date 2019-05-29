@@ -24,7 +24,7 @@ nsigma_color='#54B959'
 
 ymin_delta = 0.2 # small number
 
-def nsigScalogram(data, hypothesis, nsigma, signal_only=None,
+def nsigScalogram(data, hypothesis, nsigma, generating_function=None,
                   nsigma_min=None, nsigma_percent=1,
                   nsigma_colorcode=False, title=None, xlabel=None, outputfile=None):
     """
@@ -82,10 +82,10 @@ def nsigScalogram(data, hypothesis, nsigma, signal_only=None,
     axs[0].set_yscale('log')
     
     # The second panel will have the reconstructed signal
-    if signal_only is not None:
+    if generating_function is not None:
         #norm = np.linalg.norm(hypothesis)
-        signal_only = np.divide(signal_only, np.sqrt(hypothesis))
-        signal_hist, _, signal_center, signal_width = _BinData(signal_only, bins=2**(Level))
+        generating_function = np.divide(generating_function, np.sqrt(hypothesis))
+        signal_hist, _, signal_center, signal_width = _BinData(generating_function, bins=2**(Level))
         #axs[1].plot(signal_center, signal_hist, '*', markersize=3, color='red')
         axs[1].plot(signal_center, signal_hist, color='red', label="Generating Function")
 
