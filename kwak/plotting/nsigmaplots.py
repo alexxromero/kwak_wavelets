@@ -130,7 +130,7 @@ def nsigScalogram(data, hypothesis, nsigma, generating_function=None,
         axs[l+2].plot(range(bins), np.zeros(bins), color='black', linewidth=0.5)
         axs[l+2].tick_params(axis='x', bottom=False, labelbottom=False)
         lev = Level-l-1
-        axs[l+2].text(x=-.062, y=.66, s=r'$N\sigma(C_{l=%.1i})$'%(lev), fontsize=14,
+        axs[l+2].text(x=-.062, y=.66, s=r'$N\sigma(\ell={%.1i})$'%(lev+1), fontsize=14,
                       #bbox={'facecolor': 'white', 'alpha': 0.5, 'pad': 5},
                       transform=axs[l+2].transAxes,
                       rotation=90)
@@ -233,7 +233,7 @@ def nsigFixedRes(data, hypothesis, nsigma, nsigma_fixedres,
         axs[l+1].plot(range(bins), np.zeros(bins), color='black', linewidth=0.5)
         axs[l+1].tick_params(axis='x', bottom=False, labelbottom=False)
         lev = Level-l-1
-        axs[l+1].text(x=-.075, y=.66, s=r'$N\sigma(C_{l=%.1i})$'%(lev), fontsize=14,
+        axs[l+1].text(x=-.075, y=.66, s=r'$N\sigma(\ell={%.1i})$'%(lev+1), fontsize=14,
                       #bbox={'facecolor': 'white', 'alpha': 0.5, 'pad': 5},
                       transform=axs[l+1].transAxes, rotation=90)
 
