@@ -22,7 +22,7 @@ Coeffs_color='#69B4F2'
 Firsttrend_color=Coeffs_color
 Nsigma_color='#54B959'
 
-def wScalogram(data, hypothesis=None,
+def wScalogram(data, hypothesis=None, recscaled=False,
                nsigma=None, nsigma_min=None, nsigma_percent=1,
                firsttrend=False, logscale=True,
                filled=False,
@@ -89,19 +89,23 @@ def wScalogram(data, hypothesis=None,
         nsigCcoeffs = nsigma
         cut = '(No cut)'
         if nsigma_percent is not None:
-            cut = '(Keep ' + str(nsigma_percent*100) + '%)'
+            cut = str(nsigma_percent*100) + '%'
         if nsigma_min is not None:
-            cut = '(Sigma min = ' + str(nsigma_min)+')'
+            cut = r'$\sigma_{min}$ = ' + str(nsigma_min)
         if hypothesis is not None:
             #TODO: error trap
             DeltaCoeff = _NSigmaFilter(data, hypothesis, nsigma, nsigma_min, nsigma_percent)
             ReconstructedData = InvHaarTransform(DeltaCoeff, normalize=False)
-            RecData = np.divide(ReconstructedData, np.sqrt(hypothesis))
+            if recscaled is True:
+                RecData = np.divide(ReconstructedData, np.sqrt(hypothesis))
+            else:
+                RecData = ReconstructedData
             rec_hist, _, rec_center, rec_width = _BinData(RecData, bins=2**Level)
             axs[1].plot(rec_center, rec_hist, 'o', markersize=3, color='#E67E22',
-                        label='Reconstructed Signal {}'.format(cut))
+                        label='Reconstruction ({})'.format(cut))
             axs[1].set_yscale('linear')
-            axs[1].legend(edgecolor="black", fancybox=False, fontsize=12)
+            axs[1].legend(edgecolor="black", fancybox=False,
+                          handletextpad=0.0, handlelength=0, fontsize=12)
     
     # If firsttrend, fill out the bottom panel with the first trend
     if firsttrend==True:
@@ -163,7 +167,8 @@ def wScalogram(data, hypothesis=None,
     plt.show()
 
 
-def wScalogram_nsig(data, hypothesis=None, nsigma=None,
+def wScalogram_nsig(data, hypothesis=None, recscaled=False,
+                    nsigma=None,
                     nsigma_min=None, nsigma_percent=1,
                     firsttrend=False, logscale=True,
                     title=None, xlabel=None, outputfile=None):
@@ -221,19 +226,23 @@ def wScalogram_nsig(data, hypothesis=None, nsigma=None,
         nsigCcoeffs = nsigma
         cut = '(No cut)'
         if nsigma_percent is not None:
-            cut = '(Keep ' + str(nsigma_percent*100) + '%)'
+            cut = str(nsigma_percent*100) + '%'
         if nsigma_min is not None:
-            cut = '(Sigma min = ' + str(nsigma_min)+')'
+            cut = r'$\sigma_{min}$ = ' + str(nsigma_min)
         if hypothesis is not None:
             #TODO: error trap
             DeltaCoeff = _NSigmaFilter(data, hypothesis, nsigma, nsigma_min, nsigma_percent)
             ReconstructedData = InvHaarTransform(DeltaCoeff, normalize=False)
-            RecData = np.divide(ReconstructedData, np.sqrt(hypothesis))
+            if recscaled is True:
+                RecData = np.divide(ReconstructedData, np.sqrt(hypothesis))
+            else:
+                RecData = ReconstructedData
             rec_hist, _, rec_center, rec_width = _BinData(RecData, bins=2**Level)
             axs[1].plot(rec_center, rec_hist, 'o', markersize=3, color='#E67E22',
-                        label='Reconstructed Signal {}'.format(cut))
+                        label='Reconstruction ({})'.format(cut))
             axs[1].set_yscale('linear')
-            axs[1].legend(edgecolor="black", fancybox=False, fontsize=12)
+            axs[1].legend(edgecolor="black", fancybox=False,
+                          handletextpad=0.0, handlelength=0, fontsize=12)
 
     cmap = _NewColorMap()
     binintensity = np.absolute(nsigma)
@@ -304,7 +313,7 @@ def wScalogram_nsig(data, hypothesis=None, nsigma=None,
 
     cbar = ColorbarBase(cbar_axs, cmap=cmap, norm=norm)
 
-    if title it not None:
+    if title is not None:
         fig.suptitle(title, fontsize=18, y=0.92)
         fig.text(x=0.5, y=0.1, s=xlabel, fontsize=14)
     if outputfile is not None:
