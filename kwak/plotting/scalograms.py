@@ -22,10 +22,12 @@ Coeffs_color='#69B4F2'
 Firsttrend_color=Coeffs_color
 Nsigma_color='#54B959'
 
-def wScalogram(data, hypothesis=None, nsigma=None,
-               nsigma_min=None, nsigma_percent=1,
+def wScalogram(data, hypothesis=None,
+               nsigma=None, nsigma_min=None, nsigma_percent=1,
                firsttrend=False, logscale=True,
-               filled=False, title=None, xlabel=None, outputfile=None):
+               filled=False,
+               title=None, xlabel=None,
+               outputfile=None):
     """
     Function that generates a bar plot of the wavelet coefficients of the data array
     per level.
@@ -153,8 +155,9 @@ def wScalogram(data, hypothesis=None, nsigma=None,
                           transform=axs[l+s].transAxes)
             axs[l+s].set_yscale(scale)
 
-    fig.suptitle(title, fontsize=18, y=0.92)
-    fig.text(x=0.5, y=0.1, s=xlabel, fontsize=14)
+    if title is not None:
+        fig.suptitle(title, fontsize=18, y=0.92)
+        fig.text(x=0.5, y=0.1, s=xlabel, fontsize=14)
     if outputfile is not None:
         plt.savefig(outputfile)
     plt.show()
@@ -300,8 +303,10 @@ def wScalogram_nsig(data, hypothesis=None, nsigma=None,
             axs[l+s].set_yscale(scale)
 
     cbar = ColorbarBase(cbar_axs, cmap=cmap, norm=norm)
-    fig.suptitle(title, fontsize=18, y=0.92)
-    fig.text(x=0.5, y=0.1, s=xlabel, fontsize=14)
+
+    if title it not None:
+        fig.suptitle(title, fontsize=18, y=0.92)
+        fig.text(x=0.5, y=0.1, s=xlabel, fontsize=14)
     if outputfile is not None:
         plt.savefig(outputfile)
     plt.show()

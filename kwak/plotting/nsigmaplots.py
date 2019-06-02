@@ -138,8 +138,10 @@ def nsigScalogram(data, hypothesis, nsigma, generating_function=None,
     if nsigma_colorcode==True:
         cbar_axs = fig.add_axes([0.93, 0.15, 0.02, 0.7]) # colorbar axis
         cbar = ColorbarBase(cbar_axs, cmap=cmap, norm=norm)
-    fig.suptitle("Nsigma per Level", fontsize=18, y=0.92)
-    fig.text(x=0.5, y=0.1, s=xlabel, fontsize=14)
+
+    if title is not None:
+        fig.suptitle(title, fontsize=18, y=0.92)
+        fig.text(x=0.5, y=0.1, s=xlabel, fontsize=14)
     if outputfile is not None:
         plt.savefig(outputfile)
     plt.show()
@@ -247,8 +249,10 @@ def nsigFixedRes(data, hypothesis, nsigma, nsigma_fixedres,
     if nsigma_colorcode==True:
         cbar_axs = fig.add_axes([0.94, 0.15, 0.02, 0.7]) # colorbar axis
         cbar = ColorbarBase(cbar_axs, cmap=cmap, norm=norm)
-    fig.suptitle(title, fontsize=18, y=0.92)
-    fig.text(x=0.5, y=0.1, s=xlabel, fontsize=14)
+
+    if title is not None:
+        fig.suptitle(title, fontsize=18, y=0.92)
+        fig.text(x=0.5, y=0.1, s=xlabel, fontsize=14)
     if outputfile is not None:
         plt.savefig(outputfile)
         plt.show()
