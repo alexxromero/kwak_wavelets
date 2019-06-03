@@ -54,9 +54,9 @@ def nsigScalogram(data, hypothesis, nsigma, generating_function=None,
     
     cut = '(No cut)'
     if nsigma_percent is not None:
-        cut = '(Keep ' + str(nsigma_percent*100) + '%)'
+        cut = str(nsigma_percent*100) + '%'
     if nsigma_min is not None:
-        cut = '(Sigma min = ' + str(nsigma_min)+')'
+        cut = r'$\sigma_{min}$ = ' + str(nsigma_min)
     
     DeltaCoeff = _NSigmaFilter(data, hypothesis, nsigma, nsigma_min, nsigma_percent)
     
@@ -90,7 +90,7 @@ def nsigScalogram(data, hypothesis, nsigma, generating_function=None,
         axs[1].plot(signal_center, signal_hist, color='red', label="Generating Function")
 
     RecData = np.divide(RecData, np.sqrt(hypothesis))
-    axs[1].plot(data_center, RecData, 'o', markersize=3, color='#E67E22', label='Reconstructed Signal {}'.format(cut))
+    axs[1].plot(data_center, RecData, 'o', markersize=3, color='#E67E22', label='Reconstruction ({})'.format(cut))
 
     axs[1].plot(range(len(data_center)), np.zeros_like(RecData), color='black', linewidth=0.5)
     axs[1].set_yscale('linear')
@@ -127,7 +127,8 @@ def nsigScalogram(data, hypothesis, nsigma, generating_function=None,
                        color='#43A961')
 
         axs[l+2].set_ylim(coeffs_min-ymin_delta, coeffs_max+ymin_delta)
-        axs[l+2].plot(range(bins), np.zeros(bins), color='black', linewidth=0.5)
+        #axs[l+2].plot(range(bins), np.zeros(bins), color='black', linewidth=0.5)
+        axs[l+2].plot(edges, np.zeros_like(edges), color='black', linewidth=0.5)
         axs[l+2].tick_params(axis='x', bottom=False, labelbottom=False)
         lev = Level-l-1
         axs[l+2].text(x=-.062, y=.66, s=r'$N\sigma(\ell={%.1i})$'%(lev+1), fontsize=14,
@@ -138,6 +139,7 @@ def nsigScalogram(data, hypothesis, nsigma, generating_function=None,
     if nsigma_colorcode==True:
         cbar_axs = fig.add_axes([0.93, 0.15, 0.02, 0.7]) # colorbar axis
         cbar = ColorbarBase(cbar_axs, cmap=cmap, norm=norm)
+        fig.text(x=0.93, y=.86, s=r'$N\sigma$', fontsize=12)
 
     if title is not None:
         fig.suptitle(title, fontsize=18, y=0.92)
@@ -232,7 +234,8 @@ def nsigFixedRes(data, hypothesis, nsigma, nsigma_fixedres,
             axs[l+1].bar(RightCenter, hist, align='center', width=width/2.0, color='#43A961')
                                                                              
         axs[l+1].set_ylim(coeffs_min-ymin_delta, coeffs_max+ymin_delta)
-        axs[l+1].plot(range(bins), np.zeros(bins), color='black', linewidth=0.5)
+        #axs[l+1].plot(range(bins), np.zeros(bins), color='black', linewidth=0.5)
+        axs[l+1].plot(edges, np.zeros_like(edges), color='black', linewidth=0.5)
         axs[l+1].tick_params(axis='x', bottom=False, labelbottom=False)
         lev = Level-l-1
         axs[l+1].text(x=-.075, y=.66, s=r'$N\sigma(\ell={%.1i})$'%(lev+1), fontsize=14,
@@ -249,6 +252,8 @@ def nsigFixedRes(data, hypothesis, nsigma, nsigma_fixedres,
     if nsigma_colorcode==True:
         cbar_axs = fig.add_axes([0.94, 0.15, 0.02, 0.7]) # colorbar axis
         cbar = ColorbarBase(cbar_axs, cmap=cmap, norm=norm)
+        #cbar_axs.text(.5, sig_max*1.2, r'$N\sigma$', fontsize=12)
+        fig.text(x=0.94, y=.86, s=r'$N\sigma$', fontsize=12)
 
     if title is not None:
         fig.suptitle(title, fontsize=18, y=0.92)

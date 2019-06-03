@@ -22,8 +22,9 @@ Coeffs_color='#69B4F2'
 Firsttrend_color=Coeffs_color
 Nsigma_color='#54B959'
 
-def wScalogram(data, hypothesis=None, recscaled=False,
+def wScalogram(data, hypothesis=None,
                nsigma=None, nsigma_min=None, nsigma_percent=1,
+               reconstruction_scaled=False,
                firsttrend=False, logscale=True,
                filled=False,
                title=None, xlabel=None,
@@ -86,17 +87,20 @@ def wScalogram(data, hypothesis=None, recscaled=False,
 
     # If nsigma is provided
     if nsigma is not None:
+        
         nsigCcoeffs = nsigma
+        
         cut = '(No cut)'
         if nsigma_percent is not None:
             cut = str(nsigma_percent*100) + '%'
         if nsigma_min is not None:
             cut = r'$\sigma_{min}$ = ' + str(nsigma_min)
+
         if hypothesis is not None:
             #TODO: error trap
             DeltaCoeff = _NSigmaFilter(data, hypothesis, nsigma, nsigma_min, nsigma_percent)
             ReconstructedData = InvHaarTransform(DeltaCoeff, normalize=False)
-            if recscaled is True:
+            if reconstruction_scaled is True:
                 RecData = np.divide(ReconstructedData, np.sqrt(hypothesis))
             else:
                 RecData = ReconstructedData
@@ -105,7 +109,7 @@ def wScalogram(data, hypothesis=None, recscaled=False,
                         label='Reconstruction ({})'.format(cut))
             axs[1].set_yscale('linear')
             axs[1].legend(edgecolor="black", fancybox=False,
-                          handletextpad=0.0, handlelength=0, fontsize=12)
+                          handletextpad=0.0, handlelength=0, markerscale=0, fontsize=12)
     
     # If firsttrend, fill out the bottom panel with the first trend
     if firsttrend==True:
@@ -167,9 +171,9 @@ def wScalogram(data, hypothesis=None, recscaled=False,
     plt.show()
 
 
-def wScalogram_nsig(data, hypothesis=None, recscaled=False,
-                    nsigma=None,
-                    nsigma_min=None, nsigma_percent=1,
+def wScalogram_nsig(data, hypothesis=None,
+                    nsigma=None, nsigma_min=None, nsigma_percent=1,
+                    reconstruction_scaled=False,
                     firsttrend=False, logscale=True,
                     title=None, xlabel=None, outputfile=None):
     """
@@ -223,17 +227,20 @@ def wScalogram_nsig(data, hypothesis=None, recscaled=False,
                 
     # If nsigma function is provided
     if nsigma is not None:
+        
         nsigCcoeffs = nsigma
+
         cut = '(No cut)'
         if nsigma_percent is not None:
             cut = str(nsigma_percent*100) + '%'
         if nsigma_min is not None:
             cut = r'$\sigma_{min}$ = ' + str(nsigma_min)
+
         if hypothesis is not None:
             #TODO: error trap
             DeltaCoeff = _NSigmaFilter(data, hypothesis, nsigma, nsigma_min, nsigma_percent)
             ReconstructedData = InvHaarTransform(DeltaCoeff, normalize=False)
-            if recscaled is True:
+            if reconstruction_scaled is True:
                 RecData = np.divide(ReconstructedData, np.sqrt(hypothesis))
             else:
                 RecData = ReconstructedData
@@ -242,13 +249,13 @@ def wScalogram_nsig(data, hypothesis=None, recscaled=False,
                         label='Reconstruction ({})'.format(cut))
             axs[1].set_yscale('linear')
             axs[1].legend(edgecolor="black", fancybox=False,
-                          handletextpad=0.0, handlelength=0, fontsize=12)
+                          handletextpad=0, handlelength=0, markerscale=0, fontsize=12)
 
     cmap = _NewColorMap()
     binintensity = np.absolute(nsigma)
-    vmin = _findmin(binintensity)
-    vmax = _findmax(binintensity)
-    norm = Normalize(vmin=vmin, vmax=vmax)
+    sig_min = _findmin(binintensity)
+    sig_max = _findmax(binintensity)
+    norm = Normalize(vmin=sig_min, vmax=sig_max)
                   
     # If firsttrend, fill out the bottom panel with the first trend
     if firsttrend==True:
@@ -312,6 +319,8 @@ def wScalogram_nsig(data, hypothesis=None, recscaled=False,
             axs[l+s].set_yscale(scale)
 
     cbar = ColorbarBase(cbar_axs, cmap=cmap, norm=norm)
+    #cbar_axs.text(.5, sig_max, r'$N\sigma$', fontsize=12)
+    fig.text(x=0.93, y=.86, s=r'$N\sigma$', fontsize=12)
 
     if title is not None:
         fig.suptitle(title, fontsize=18, y=0.92)
