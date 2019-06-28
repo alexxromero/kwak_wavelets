@@ -1,23 +1,33 @@
 # KWAK Examples
 
-This folder contains the sample code used to generate the examples. To generate the data files, run 
+This directory contains sample code to generate the toy examples from Ref. [1]. The toy distributions are:  
+1. A narrow Gaussian bump  
+2. A wide Gaussian bump   
+3. A  bump-dip combination   
+4. An oscillatory pattern with a shifted starting point   
 
-    python generate_examples.py   
+To generate the data files, run:  
+
+    python generate_examples.py    
     
-The examples are based on the distribytion of the diphoton invarient mass for spin-0 selection found in HEPData table 9.   
+The data files contain the following columns:    
+:: Nevents ::                      Number of events per bin  
+:: Hypothesis ::                 Flat background hypothesis   
+:: Generating Function ::  Signal added to the flat background hypothesis 
 
-This will create the following files:
-- **Wide.csv** : Wide bump signal on top of a diphoton background distribution.   
-- **Narrow.csv** : Narrow bump signal on top of a diphoton background distribution.    
- - **BumpDip.csv** : Narrow bump and a dip on top of a diphoton background distribution.   
-- **KK.csv** : Kalusa-Klein-like oscillations on top of a diphoton background distribution.   
-- **Null.csv** : Diphoton background distribution.   
+In addition, the code to generate the Kaluza-Klein-like distribution is also provided. To generate the data file, run:
 
-The data files contain the following columns:  
-: M(gamma gamma) [GeV] : Diphoton invariant mass.    
-: Nevents : Number of events per bin.  
-: Sigma : Sigma per bin.  
-: Hypothesis : Diphoton hypothesis.   
-: Generating Function : ISignal added to the background hypothesis.   
+    python generate_KK_examples.py 
 
+This will generate the file "KK.csv" with the Kaluza-Klen-like distribytion and "Null.csv" with the null hypothesis. The columns are:
+
+:: Mgg [GeV] ::    Diphoton invariant mass  
+:: Nevents ::        Number of events per bin   
+:: Sigma ::           Sigma per bin  
+:: Hypothesis ::   Diphoton hypothesis   
+
+To analyze these data files with KWAK, the Demo.ipynb shows how to use the package to analyze these distributions and generate plots like the ones in Ref. [1].
+
+### References
+[1] Ben G. Lillard, Tilman Plehn, Alexis Romero, Tim M. P. Tait, _Multi-scale Mining of Kinematic Distributions with Wavelets_.
 
