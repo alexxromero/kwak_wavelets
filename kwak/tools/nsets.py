@@ -24,7 +24,8 @@ class NsetsMethod:
         NsetsMethod class contains all functions and instances used in the 'nsets'
         method.
     """
-    def __init__(self, data, hypothesis, nsets, extrapolate=False, fastGaussian=False, seed=123):
+    def __init__(self, data, hypothesis, nsets,
+                 extrapolate=False, fastGaussian=False, seed=123):
         """
         Parameters
         ----------
@@ -37,11 +38,11 @@ class NsetsMethod:
         """
         self.WaveDec_data = HaarTransform(data, Normalize=False)
         self.WaveDec_hypo = HaarTransform(hypothesis, Normalize=False)
-        
+
         len_wdata = len(self.WaveDec_data)
         len_whypo = len(self.WaveDec_hypo)
         assert(len_wdata==len_whypo), "Data and hypothesis must have the same wavelet decomposition level."
-        
+
         self.Level = len_wdata-1
         self.Seed = seed
         self.Nsets = nsets
@@ -52,7 +53,7 @@ class NsetsMethod:
         for i in range(1, nsets):
             pseudodata = self.GeneratePoisson(hypothesis, (self.Seed*i))
             WaveDec_nsets[i] = HaarTransform(pseudodata, Normalize=False)
-        
+
         PseudoWD_PerBin = _empty_like(self.WaveDec_data)
         for l in range(self.Level):
             J = 2**(self.Level-l-1)
@@ -60,14 +61,14 @@ class NsetsMethod:
                 Ccoeff_list = [WaveDec_nsets[i][l][j] for i in range(nsets)]
                 unique, counts = np.unique(Ccoeff_list, return_counts=True)
                 PseudoWD_PerBin[l][j] = [unique, counts]
-            
+
         Acoeff_list = [WaveDec_nsets[i][self.Level][0] for i in range(nsets)]
         unique, counts = np.unique(Acoeff_list, return_counts=True)
         PseudoWD_PerBin[-1][0] = [unique, counts]
-        
+
         self.Histogram = PseudoWD_PerBin
         self.zipHistogram = self.zipHistogram(self.Histogram)
-        
+
         if self.fast==True:
             nsigmafit = _zeros_like(self.WaveDec_data)
             for l, level in enumerate(self.Histogram):
@@ -142,7 +143,7 @@ class NsetsMethod:
     def Extrapolate(self):
         lessX_fit = _zeros_like(self.WaveDec_data)
         eqX_fit = _zeros_like(self.WaveDec_data)
-        
+
         fit_params = _empty_like(self.WaveDec_data)
         fit_prob = _empty_like(self.WaveDec_data)
         for l, level in enumerate(self.Histogram):
@@ -274,5 +275,3 @@ def _np_fitC(c, n0, mu, sigma, v, p):
     expA = -abs(v) * pow(abs(c), p)
     np_fitlogC = n0 + expS + expA
     return np.exp(np_fitlogC)
-
-

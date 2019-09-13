@@ -32,16 +32,16 @@ class ExactMethod:
         data : array_like
         hypothesis : array_like
         """
-        
+
         self.WaveDec_data = HaarTransform(data, Normalize=False)
         self.WaveDec_hypo = HaarTransform(hypothesis, Normalize=False)
 
         len_wdata = len(self.WaveDec_data)
         len_whypo = len(self.WaveDec_hypo)
         assert(len_wdata==len_whypo), "Data and hypothesis must have the same wavelet decomposition level."
-        
+
         self.Level = len_wdata-1
-        
+
         # Do the C prob first
         self.Histogram = _empty_like(self.WaveDec_data)
         self.PlessX = _zeros_like(self.WaveDec_data)
@@ -75,7 +75,7 @@ class ExactMethod:
                 self.PlessX[l][j] = PlessX
                 self.PeqX[l][j] = p0
 
-        # Now fir the first trend
+        # Now for the first trend
         mu1 = self.h_mu1(hypothesis, self.Level, 1)
         mu2 = self.h_mu2(hypothesis, self.Level, 1)
         A0 = self.WaveDec_data[-1][0]
@@ -102,11 +102,12 @@ class ExactMethod:
             p0 = 0
         self.PlessX[self.Level][0] = PlessX
         self.PeqX[self.Level][0] = p0
-            
+
         self.Nsigma = self.NSigmaPerBin(self.PlessX)
         self.NsigmaFixedRes = FixedResGlobal(self.Nsigma)
 
-        self.zipHistogram = self.zipHistogram(self.Histogram)
+        # self.zipHistogram = self.zipHistogram(self.Histogram)
+        self.zipHistogram = self.Histogram
 
     def NSigmaPerBin(self, lessX):
         nsigma = _zeros_like(self.WaveDec_data)
@@ -117,7 +118,7 @@ class ExactMethod:
                 nsig = float(mp.nstr(sign*_nsigma(lessX[l][j]), g_logdigits))
                 nsigma[l][j] = nsig
         return nsigma
-    
+
     def zipHistogram(self, histogram):
         zipHist = _empty_like(self.WaveDec_data)
         for i, level in enumerate(histogram):
@@ -130,7 +131,7 @@ class ExactMethod:
     @staticmethod
     def h_mu1(array, l, j):
         return wh_alj(array, l-1, 2*j-1)
-    
+
     @staticmethod
     def h_mu2(array, l, j):
         return wh_alj(array, l-1, 2*j)
@@ -151,5 +152,3 @@ class ExactMethod:
 
 def _nsigma(pLessX):
     return mp.sqrt(2)*mp.erfinv(pLessX)
-
-

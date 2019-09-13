@@ -39,14 +39,14 @@ class nsets:
         ::outputdir:: string
           File to save all instances to.
         """
-        
+
         data = np.asarray(data)
         hypothesis = np.asarray(hypothesis)
-        
+
         data_type = type(data[0].item()) # Input data must be integer type
         assert(issubclass(data_type, int)), "Data array must be integer valued."
         assert(len(data)==len(hypothesis)), "Data and hypothesis arrays must have the same length."
-        
+
         # -- Argument options ----------
         self.nsets = nsets
         self.seed = seed
@@ -61,10 +61,8 @@ class nsets:
         self.Level = NsetsAnalysis.Level # Max level of the discrete Haar wavelet transformation of the data
         self.Histogram = NsetsAnalysis.zipHistogram # List of coefficients per level and their multipicity (coeff, multi)
         self.Nsigma = NsetsAnalysis.Nsigma # Nsigma per coefficient
-        #self.PlessX = NsetsAnalysis.PlessX # Prob. of obtaining a less extreme coeff. value
-        #self.PeqX = NsetsAnalysis.PeqX # Prob. of obtaining an equally extreme coeff. value
         self.NsigmaFixedRes = NsetsAnalysis.NsigmaFixedRes # Global significance of Nsigma per level
-        
+
         # -- If fastGaussian is False --
         if self.fast==False:
             self.PlessX = NsetsAnalysis.PlessX
@@ -82,25 +80,21 @@ class nsets:
             path = os.getcwd() + "/" + outputdir
             print("Printing files")
             os.mkdir(path)
-            
+
             self.printInfo(path)
             Nsigma_dframe = _DataFrame(self.Nsigma)
-            PlessX_dframe = _DataFrame(self.PlessX)
-            PeqX_dframe = _DataFrame(self.PeqX)
             FixedRes_dframe = _scalarDataFrame(self.NsigmaFixedRes)
-            
+
             Nsigma_dframe.to_csv(path+"/Nsigma.csv", index=False)
-            PlessX_dframe.to_csv(path+"/PlessX.csv", index=False)
-            PeqX_dframe.to_csv(path+"/PeqX.csv", index=False)
             FixedRes_dframe.to_csv(path+"/NsigmaFixedRes.csv", index=False)
-            
+
             if self.fast==False:
                 PlessX_dframe = _DataFrame(self.PlessX)
                 PeqX_dframe = _DataFrame(self.PeqX)
-                
+
                 PlessX_dframe.to_csv(path+"/PlessX.csv", index=False)
                 PeqX_dframe.to_csv(path+"/PeqX.csv", index=False)
-            
+
                 if extrapolate==True:
                     Nsigma_dframe_fit = _DataFrame(self.Nsigma_fit)
                     PlessX_dframe_fit = _DataFrame(self.PlessX_fit)
@@ -140,10 +134,10 @@ class exact:
         ::outputdir:: string
           File to save all instances to.
         """
-        
+
         data = np.asarray(data)
         hypothesis = np.asarray(hypothesis)
-        
+
         data_type = type(data[0]) # Input data must be integer type
         assert(issubclass(data_type, int)), "Data array must be integer valued."
 
@@ -164,13 +158,13 @@ class exact:
             path = os.getcwd() + "/" + outputdir
             print("Printing files")
             os.mkdir(path)
-        
+
             #_nsetsInfo(path)
             Nsigma_dframe = _DataFrame(self.Nsigma)
             PlessX_dframe = _DataFrame(self.PlessX)
             PeqX_dframe = _DataFrame(self.PeqX)
             FixedRes_dframe = _scalarDataFrame(self.NsigmaFixedRes)
-            
+
             Nsigma_dframe.to_csv(path+"/Nsigma.csv", index=False)
             PlessX_dframe.to_csv(path+"/PlessX.csv", index=False)
             PeqX_dframe.to_csv(path+"/PeqX.csv", index=False)
@@ -183,18 +177,18 @@ def _DataFrame(obj):
     for i, lev_array in enumerate(obj[:-1]):
         label = "C"+str(lev-i-1)
         data = lev_array
-        
+
         df = pd.DataFrame({label : data})
         dframes.append(df)
-    
+
     label = "A0"
     data = obj[-1]
-    
+
     df = pd.DataFrame({label : data})
     dframes.append(df)
 
     concat_dframe = pd.concat(dframes, axis=1)
-    
+
     return concat_dframe
 
 
@@ -204,17 +198,16 @@ def _scalarDataFrame(obj):
     for i, lev_array in enumerate(obj[:-1]):
         label = "C"+str(lev-i-1)
         data = lev_array
-        
+
         df = pd.DataFrame({label : [data]})
         dframes.append(df)
-    
+
     label = "A0"
     data = obj[-1]
-    
+
     df = pd.DataFrame({label : [data]})
     dframes.append(df)
 
     concat_dframe = pd.concat(dframes, axis=1)
 
     return concat_dframe
-
