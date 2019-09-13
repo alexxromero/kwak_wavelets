@@ -1,7 +1,9 @@
 """
-This file contains the NsetsMethod class that performs the
-'nsets' method called by waveletanalysis.py
+This file contains the class NsetsMethod described in
+Ben G. Lillard, Tilman Plehn, Alexis Romero, Tim M. P. Tait,
+Multi-scale Mining of Kinematic Distributions with Wavelets.
 """
+
 from __future__ import absolute_import
 import numpy as np
 import scipy.special as spf
@@ -20,24 +22,30 @@ mp.dps = g_digits + 2 #a bit extra
 __all__ = ['NsetsMethod']
 
 class NsetsMethod:
-    """
-        NsetsMethod class contains all functions and instances used in the 'nsets'
-        method.
-    """
+
     def __init__(self, data, hypothesis, nsets,
                  extrapolate=False, fastGaussian=False, seed=123):
         """
         Parameters
         ----------
-        data : array_like
-        hypothesis : array_like
-        nsets : int
-        extrapolate : bool
-        fastGaussian : bool
-        seed : int
+        ::data:: int array_like
+          data array
+        ::hypothesis:: array_like
+          hypothesis background to sample from a Poisson distribution
+        ::nsets:: int
+          no. of times to sample the hypothesis from a Poisson distribution
+        ::extrapolate:: bool
+          if True, apply a functional fit to the nset samples
+        ::fastGaussian:: bool
+          if True, calculate the mean and std of the nset samples
+        ::seed:: int
+          initial seed for the random number generator
         """
-        self.WaveDec_data = HaarTransform(data, Normalize=False)
-        self.WaveDec_hypo = HaarTransform(hypothesis, Normalize=False)
+
+        assert(len(data)==len(hypothesis)), "Data and hypothesis arrays must have the same length"
+
+        self.WaveDec_data = HaarTransform(data, Normalize=False)  # Haar coefficients of the data
+        self.WaveDec_hypo = HaarTransform(hypothesis, Normalize=False)  # Haar coefficients of the hypothesis
 
         len_wdata = len(self.WaveDec_data)
         len_whypo = len(self.WaveDec_hypo)
@@ -48,26 +56,27 @@ class NsetsMethod:
         self.Nsets = nsets
         self.fast = fastGaussian
 
-        WaveDec_nsets = np.empty((nsets), dtype=object) # Wavelet dec of the nset pseudodata
-        WaveDec_nsets[0] = self.WaveDec_data
+        WaveDec_nsets = np.empty((nsets), dtype=object) # save the coefficients of the nset samples
+        WaveDec_nsets[0] = self.WaveDec_data  # initialize the array with the coefficients of the data
         for i in range(1, nsets):
             pseudodata = self.GeneratePoisson(hypothesis, (self.Seed*i))
             WaveDec_nsets[i] = HaarTransform(pseudodata, Normalize=False)
 
-        PseudoWD_PerBin = _empty_like(self.WaveDec_data)
+        PseudoWD_PerBin = _empty_like(self.WaveDec_data)  # save the different coefficients per bin and
+                                                          # their multiplicity as [coeff, count]
         for l in range(self.Level):
             J = 2**(self.Level-l-1)
             for j in range(J):
                 Ccoeff_list = [WaveDec_nsets[i][l][j] for i in range(nsets)]
                 unique, counts = np.unique(Ccoeff_list, return_counts=True)
-                PseudoWD_PerBin[l][j] = [unique, counts]
+                PseudoWD_PerBin[l][j] = [unique, counts]  # save the coeff. values and their count
 
         Acoeff_list = [WaveDec_nsets[i][self.Level][0] for i in range(nsets)]
         unique, counts = np.unique(Acoeff_list, return_counts=True)
-        PseudoWD_PerBin[-1][0] = [unique, counts]
+        PseudoWD_PerBin[-1][0] = [unique, counts]  # first trend coefficeints and counts
 
         self.Histogram = PseudoWD_PerBin
-        self.zipHistogram = self.zipHistogram(self.Histogram)
+        self.zipHistogram = self.zipHistogram(self.Histogram)  # zip it
 
         if self.fast==True:
             nsigmafit = _zeros_like(self.WaveDec_data)

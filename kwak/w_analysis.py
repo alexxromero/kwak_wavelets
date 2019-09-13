@@ -1,8 +1,22 @@
 """
-This file contains the classes nsets and exact that compute the
-statistical analysis of the data based on the given hypothesis array.
-TODO: fastgaussian+extrapolate asserts
+This file contains the different methods used to determine the probability
+distributions for the wavelet transform coefficients of the data given a
+hypothesis.
+
+** Exact Method **
+This approach is based on Poisson statistics and is valid for kinematic
+distributions where the systmatic error can be neglected.
+
+** Approximate Methods **
+For distributions where the systematic error cannot be neglected, the
+distributions of the wavelet coefficients can be approxiamted via the nsets
+method. This method generates samples from a Poisson statistic to get a large
+number of pseudo-random datasts similar to the given hypothesis.
+The wavelet transform coefficents of the pseudo-random datasets are stored
+in a histogram, which is used to calculate the probability distribution
+of per coefficient.
 """
+
 from __future__ import absolute_import
 import os
 import numpy as np
@@ -15,11 +29,12 @@ from .tools import NsetsMethod, ExactMethod
 __all__ = ['nsets', 'exact']
 
 class nsets:
-    def __init__(self, data, hypothesis, nsets, seed=None, extrapolate=False,
-                 fastGaussian=False, outputdir=None):
+    def __init__(self, data, hypothesis, nsets, seed=None, fastGaussian=False,
+                 extrapolate=False, outputdir=None):
         """
-        Compute the statistical analysis for the data by sampling the
-        hypothesis from a Poisson distribution.
+        The nsets class calculates the approximate probability distribution of
+        the wavelet coefficients of the data given a hypothesis.
+
         Parameters
         ----------
         ::data:: int array_like
@@ -27,25 +42,23 @@ class nsets:
         ::hypothesis:: array_like
           Binned background distribution.
         ::nsets:: int
-          Number of hypothesis-like arrays to sample from a Poisson
-          distribution. If nsets is None, the 'exact' method will be used.
+          Number of times to sample the hypothesis from a Poisson distribution.
         ::extrapolate:: bool
-          If extrapolate is True, fit a curve to the nset data.
-          Only possible if nsets is not None.
-        ::fastGaussian:: boolean
-          If True, calculates Nsigma and NsigmaFRGS directly from the
-          mean and standard deviation. Does not reconstruct the probability
-          distribution for wavelet coefficients.
+          If true, a functional fit will be applied to the pseudo-random data
+          arrays.
+        ::fastGaussian:: bool
+          If True, the mean and std of each nset histogram will be calculated.
         ::outputdir:: string
           File to save all instances to.
         """
 
-        data = np.asarray(data)
-        hypothesis = np.asarray(hypothesis)
+        assert(len(data)==len(hypothesis)), "Data and hypothesis arrays must have the same length"
+        assert(nsets>0), "nsets must be greater than zero"
+        if (extrapolate==True):
+            assert(fastGaussian==False), "fastGaussian must be False if extrapolate is True"
 
-        data_type = type(data[0].item()) # Input data must be integer type
-        assert(issubclass(data_type, int)), "Data array must be integer valued."
-        assert(len(data)==len(hypothesis)), "Data and hypothesis arrays must have the same length."
+        self.data = np.asarray(data, dtype=np.int)  # data must be int-type
+        self.hypothesis = np.asarray(hypothesis)
 
         # -- Argument options ----------
         self.nsets = nsets
@@ -54,32 +67,29 @@ class nsets:
         self.fast = fastGaussian
         # ------------------------------
 
-        self.WaveDec_data = HaarTransform(data, Normalize=False)
-        self.WaveDec_hypothesis = HaarTransform(hypothesis, Normalize=False)
+        self.WaveDec_data = HaarTransform(data, Normalize=False)  # wavelet coefficients of the data
+        self.WaveDec_hypothesis = HaarTransform(hypothesis, Normalize=False)  # wavelet coefficients of the hypothesis
 
-        NsetsAnalysis = NsetsMethod(data, hypothesis, nsets, extrapolate, fastGaussian, seed)
+                NsetsAnalysis = NsetsMethod(self.data, self.hypothesis, self.nsets,
+                                    self.extrapolate, self.fastGaussian, self.seed)
         self.Level = NsetsAnalysis.Level # Max level of the discrete Haar wavelet transformation of the data
         self.Histogram = NsetsAnalysis.zipHistogram # List of coefficients per level and their multipicity (coeff, multi)
         self.Nsigma = NsetsAnalysis.Nsigma # Nsigma per coefficient
         self.NsigmaFixedRes = NsetsAnalysis.NsigmaFixedRes # Global significance of Nsigma per level
 
-        # -- If fastGaussian is False --
         if self.fast==False:
             self.PlessX = NsetsAnalysis.PlessX
             self.PeqX = NsetsAnalysis.PeqX
-            # -- If extrapolate is True --
             if extrapolate==True:
                 self.Nsigma_fit = NsetsAnalysis.Nsigma_fit
                 self.PlessX_fit = NsetsAnalysis.PlessX_fit
                 self.PeqX_fit = NsetsAnalysis.PeqX_fit
                 self.NsigmaFixedRes_fit = NsetsAnalysis.NsigmaFixedRes_fit
 
-        # -- Write output to csv files --
-        # -- outputdir must be unique --
         if outputdir is not None:
             path = os.getcwd() + "/" + outputdir
             print("Printing files")
-            os.mkdir(path)
+            os.mkdir(path)  # create output directory
 
             self.printInfo(path)
             Nsigma_dframe = _DataFrame(self.Nsigma)
@@ -124,7 +134,9 @@ class nsets:
 class exact:
     def __init__(self, data, hypothesis, outputdir=None):
         """
-        Compute the statistical analysis for the data given a hypothesis.
+        The exac method calculates the exact probability distribytion of the
+        data wavelet coefficients using the Skellam distribution.
+
         Parameters
         ----------
         ::data:: int array_like
@@ -135,11 +147,10 @@ class exact:
           File to save all instances to.
         """
 
-        data = np.asarray(data)
-        hypothesis = np.asarray(hypothesis)
+        assert(len(data)==len(hypothesis)), "Data and hypothesis arrays must have the same length"
 
-        data_type = type(data[0]) # Input data must be integer type
-        assert(issubclass(data_type, int)), "Data array must be integer valued."
+        self.data = np.asarray(data, dtype=np.int)  # data must be int-type
+        self.hypothesis = np.asarray(hypothesis)
 
         self.WaveDec_data = HaarTransform(data, Normalize=False)
         self.WaveDec_hypothesis = HaarTransform(hypothesis, Normalize=False)
@@ -152,8 +163,6 @@ class exact:
         self.PeqX = ExactAnalysis.PeqX # Prob. of obtaining an equally extreme coeff. value
         self.NsigmaFixedRes = ExactAnalysis.NsigmaFixedRes # Global significance of Nsigma per level
 
-        # -- Write output to csv files --
-        # -- outputdir must be unique --
         if outputdir is not None:
             path = os.getcwd() + "/" + outputdir
             print("Printing files")

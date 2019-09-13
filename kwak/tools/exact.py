@@ -1,7 +1,9 @@
 """
-    This file contains the Exact class that performs the statistical
-    calculations when nsets is None when called by waveletanalysis.py
+This file contains the class ExactMethod described in
+Ben G. Lillard, Tilman Plehn, Alexis Romero, Tim M. P. Tait,
+Multi-scale Mining of Kinematic Distributions with Wavelets.
 """
+
 from __future__ import absolute_import
 import numpy as np
 import scipy.special as spf
@@ -21,16 +23,13 @@ g_logdigits = 17 #for nsigma and log10p output
 mp.dps = g_digits + 2 #a bit extra
 
 class ExactMethod:
-    """
-        Exact class contains all functions and instances used in the 'exact'
-        method.
-    """
+
     def __init__(self, data, hypothesis):
         """
         Parameters
         ----------
-        data : array_like
-        hypothesis : array_like
+        ::data:: array_like
+        ::hypothesis:: array_like
         """
 
         self.WaveDec_data = HaarTransform(data, Normalize=False)
